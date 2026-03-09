@@ -1,0 +1,40 @@
+# Build outputs
+build/
+dist/
+*.exe
+*.app
+*.apk
+*.ipa
+
+# Dependencies
+node_modules/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models (large files)
+models/*.bin
+models/*.gguf
+models/*.onnx
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local

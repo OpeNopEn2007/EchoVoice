@@ -1,0 +1,40 @@
+[package]
+name = "echovoice-desktop"
+version = "0.1.0"
+edition = "2021"
+authors = ["EchoVoice Team"]
+description = "轻量级 AI 语音输入法 - 桌面端"
+
+[dependencies]
+# 音频录制
+cpal = "0.15"
+# 全局快捷键
+global-hotkey = "0.4"
+# 剪贴板操作
+arboard = "3.3"
+# 模拟键盘输入
+enigo = "0.1"
+# 异步运行时
+tokio = { version = "1", features = ["full"] }
+# 错误处理
+anyhow = "1.0"
+# 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# 日志
+tracing = "0.1"
+tracing-subscriber = "0.3"
+# HTTP客户端（用于下载模型）
+reqwest = { version = "0.11", features = ["blocking"] }
+# 文件操作
+tempfile = "3.8"
+# 命令行参数
+clap = { version = "4.4", features = ["derive"] }
+# 系统托盘
+tao = "0.24"
+tray-icon = "0.11"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
