@@ -1,0 +1,11 @@
+[package]
+name = "echovoice-hotkey"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rdev = "0.5"
+thiserror = "1.0"
+
+[dev-dependencies]
+anyhow = "1.0"
