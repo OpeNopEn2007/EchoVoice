@@ -1,5 +1,6 @@
 use std::path::Path;
 use thiserror::Error;
+use whisper_rs::{WhisperContext, FullParams, SamplingStrategy};
 
 #[derive(Error, Debug)]
 pub enum ASRError {
@@ -12,29 +13,55 @@ pub enum ASRError {
 }
 
 pub struct WhisperASR {
-    model_path: String,
+    ctx: WhisperContext,
 }
 
 impl WhisperASR {
     pub fn new(model_path: impl AsRef<Path>) -> Result<Self, ASRError> {
-        let path = model_path.as_ref().to_string_lossy().to_string();
         if !model_path.as_ref().exists() {
-            return Err(ASRError::ModelNotFound(path));
+            return Err(ASRError::ModelNotFound(
+                model_path.as_ref().to_string_lossy().to_string()
+            ));
         }
-        Ok(Self { model_path: path })
+
+        let ctx = WhisperContext::new(
+            model_path.as_ref().to_str().unwrap(),
+        )
+        .map_err(|e| ASRError::WhisperError(format!("{:?}", e)))?;
+
+        Ok(Self { ctx })
     }
 
     pub fn transcribe(&self, audio: &[f32]) -> Result<String, ASRError> {
-        // TODO: Integrate whisper-rs
-        // Placeholder implementation
         if audio.is_empty() {
             return Err(ASRError::InvalidAudio);
         }
-        Ok("Transcription placeholder".to_string())
-    }
 
-    pub fn model_path(&self) -> &str {
-        &self.model_path
+        let mut params = FullParams::new(SamplingStrategy::default());
+        params.set_language(Some("zh"));
+        params.set_translate(false);
+        params.set_print_special(false);
+        params.set_print_progress(false);
+        params.set_print_realtime(false);
+        params.set_print_timestamps(false);
+
+        let mut state = self.ctx.create_state()
+            .map_err(|e| ASRError::WhisperError(format!("{:?}", e)))?;
+
+        state.full(params, audio)
+            .map_err(|e| ASRError::WhisperError(format!("{:?}", e)))?;
+
+        let num_segments = state.full_n_segments()
+            .map_err(|e| ASRError::WhisperError(format!("{:?}", e)))?;
+
+        let mut text = String::new();
+        for i in 0..num_segments {
+            let segment = state.full_get_segment_text(i)
+                .map_err(|e| ASRError::WhisperError(format!("{:?}", e)))?;
+            text.push_str(&segment);
+        }
+
+        Ok(text.trim().to_string())
     }
 }
 
@@ -54,14 +81,12 @@ mod tests {
 
     #[test]
     fn test_asr_creation() {
-        // This will fail if model doesn't exist, which is expected in tests
         let result = WhisperASR::new("/nonexistent/model.bin");
         assert!(result.is_err());
     }
 
     #[test]
     fn test_transcribe_empty() {
-        // Skip if model doesn't exist
         let model_path = std::path::Path::new("../../models/ggml-base.bin");
         if !model_path.exists() {
             return;
