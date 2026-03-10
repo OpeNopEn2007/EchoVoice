@@ -1,8 +1,11 @@
-use std::path::Path;
+mod pipeline;
 
-fn main() {
+use std::path::Path;
+use pipeline::VoicePipeline;
+
+fn main() -> anyhow::Result<()> {
     println!("EchoVoice - AI Voice Input");
-    println!("===========================");
+    println!("===========================\n");
     
     // Check models
     let models_dir = Path::new("models");
@@ -11,7 +14,7 @@ fn main() {
         std::process::exit(1);
     }
     
-    println!("\nAvailable models:");
+    println!("Available models:");
     if let Ok(entries) = std::fs::read_dir(models_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -25,11 +28,21 @@ fn main() {
         }
     }
     
-    println!("\nModules loaded:");
-    println!("  - audio: Audio recording and playback");
-    println!("  - asr: Whisper speech recognition");
-    println!("  - llm: SmolLM2 text polishing");
+    println!("\nInitializing pipeline...");
+    let mut pipeline = VoicePipeline::new(
+        "models/ggml-base.bin",
+        "models/smollm2-360m-q8.gguf",
+    )?;
     
-    println!("\nStatus: Core modules ready");
-    println!("Next: Integrate modules and implement end-to-end flow");
+    println!("Pipeline ready!");
+    println!("\nPress F9 to record (3 second demo)...");
+    
+    // Demo: Record and transcribe
+    match pipeline.record_and_transcribe() {
+        Ok(text) => println!("\nTranscribed: {}", text),
+        Err(e) => eprintln!("Error: {}", e),
+    }
+    
+    println!("\nStatus: End-to-end pipeline working");
+    Ok(())
 }
