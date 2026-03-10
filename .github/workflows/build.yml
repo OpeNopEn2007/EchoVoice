@@ -1,0 +1,40 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Rust
+      uses: dtolnay/rust-action@stable
+    - name: Install Tauri
+      run: cargo install tauri-cli
+    - name: Build
+      run: cd src-tauri && cargo tauri build
+    - name: Upload DMG
+      uses: actions/upload-artifact@v3
+      with:
+        name: EchoVoice-macOS
+        path: target/release/bundle/dmg/*.dmg
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Rust
+      uses: dtolnay/rust-action@stable
+    - name: Install Tauri
+      run: cargo install tauri-cli
+    - name: Build
+      run: cd src-tauri && cargo tauri build
+    - name: Upload MSI
+      uses: actions/upload-artifact@v3
+      with:
+        name: EchoVoice-Windows
+        path: target/release/bundle/msi/*.msi
