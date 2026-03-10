@@ -1,0 +1,13 @@
+[package]
+name = "echovoice-config"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+dirs = "5.0"
+thiserror = "1.0"
+
+[dev-dependencies]
+anyhow = "1.0"
