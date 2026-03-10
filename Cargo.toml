@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "crates/audio",
+    "crates/asr",
+    "crates/llm",
+]
+resolver = "2"
+
+[workspace.dependencies]
+thiserror = "1.0"
+anyhow = "1.0"
