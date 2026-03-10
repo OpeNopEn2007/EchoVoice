@@ -1,0 +1,8 @@
+# Linguist overrides
+src-tauri/gen/** linguist-generated=true
+src-tauri/icons/** linguist-generated=true
+target/** linguist-generated=true
+*.lock linguist-generated=true
+
+# Rust is the primary language
+*.rs linguist-language=Rust
