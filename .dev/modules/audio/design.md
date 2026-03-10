@@ -1,122 +1,72 @@
-# Audio 模块详细设计
+# Audio 模块设计文档
 
-> 音频录制模块设计文档
+## 模块职责
 
----
+负责音频的录制和播放，是 EchoVoice 的输入/输出基础。
 
-## 架构
+## 功能需求
 
-```
-┌─────────────────────────────────────┐
-│          AudioRecorder              │
-├─────────────────────────────────────┤
-│  - audio_data: Vec<f32>             │
-│  - stream: Option<Stream>           │
-│  - sample_rate: u32                 │
-├─────────────────────────────────────┤
-│  + new() -> Result<Self>            │
-│  + start() -> Result<()>            │
-│  + stop() -> Result<Vec<f32>>       │
-│  + sample_rate() -> u32             │
-└─────────────────────────────────────┘
-```
+1. **录音**
+   - 支持系统默认输入设备
+   - 采样率：16kHz（Whisper 要求）
+   - 格式：f32 PCM
+   - 支持按住录音（Push-to-talk）
 
----
+2. **播放**
+   - 支持系统默认输出设备
+   - 播放提示音（开始录音、结束录音、错误）
 
-## 状态机
+## 技术选型
 
-```
-┌─────────┐    start()     ┌───────────┐
-│  Idle   │ ─────────────> │ Recording │
-│ (初始)  │                │ (录音中)   │
-└─────────┘                └─────┬─────┘
-   ▲                             │
-   │         stop()              │
-   └─────────────────────────────┘
-```
+- **库**: `cpal`（跨平台音频 I/O）
+- **后端**: CoreAudio (macOS)、ALSA (Linux)、WASAPI (Windows)
 
----
-
-## 录音流程
-
-### 开始录音
-
-1. **检查状态**
-   - 如果已在录音中 → 返回错误
-   - 如果空闲 → 继续
-
-2. **获取设备**
-   - 查询默认输入设备
-   - 获取设备配置（采样率、格式）
-
-3. **创建流**
-   - 构建输入流回调
-   - 在回调中将音频数据追加到缓冲区
-
-4. **启动**
-   - 清空之前的缓冲区
-   - 播放（启动）流
-
-### 停止录音
-
-1. **停止流**
-   - 停止并释放音频流
-
-2. **返回数据**
-   - 克隆缓冲区数据
-   - 返回 Vec<f32>
-
----
-
-## 技术细节
-
-### 音频格式
+## 接口设计
 
 ```rust
-// 采样率
-const SAMPLE_RATE: u32 = 16000;
+pub struct AudioRecorder {
+    stream: Option<Stream>,
+    buffer: Arc<Mutex<Vec<f32>>>,
+}
 
-// 格式: f32, -1.0 到 1.0
-// 通道: 单声道
-// 每样本: 4 bytes
+impl AudioRecorder {
+    pub fn new() -> Result<Self>;
+    pub fn start(&mut self) -> Result<()>;
+    pub fn stop(&mut self) -> Result<Vec<f32>>;
+    pub fn is_recording(&self) -> bool;
+}
+
+pub struct AudioPlayer {
+    stream: Option<Stream>,
+}
+
+impl AudioPlayer {
+    pub fn new() -> Result<Self>;
+    pub fn play(&mut self, samples: &[f32]) -> Result<()>;
+    pub fn play_beep(&mut self) -> Result<()>;  // 提示音
+}
 ```
 
-### 缓冲区管理
+## 错误处理
 
-```rust
-// 使用 Arc<Mutex<Vec<f32>>> 线程安全共享
-// 录音时：回调中不断 push
-// 停止时：clone 返回
+- 设备未找到
+- 权限被拒绝
+- 采样率不支持
+
+## 依赖
+
+```toml
+[dependencies]
+cpal = "0.15"
 ```
 
-### 错误处理
+## 测试策略
 
-| 错误类型 | 场景 | 处理 |
-|---------|------|------|
-| NoDevice | 无麦克风 | 提示用户检查设备 |
-| PermissionDenied | 无权限 | 提示用户开启权限 |
-| DeviceBusy | 设备被占用 | 等待或提示重试 |
-| InvalidFormat | 不支持的格式 | 尝试转换或报错 |
+1. 单元测试：模拟音频流
+2. 集成测试：实际录音/播放
 
----
+## 下一步
 
-## 性能考虑
-
-- **延迟**: 音频回调应快速完成，避免阻塞
-- **内存**: 长时间录音可能占用大量内存，考虑分段
-- **CPU**: 音频处理在独立线程，不阻塞主线程
-
----
-
-## 代码对应
-
-| 设计章节 | 代码位置 |
-|---------|---------|
-| 数据结构 | `src/audio/mod.rs:10-20` |
-| new() | `src/audio/mod.rs:22-35` |
-| start() | `src/audio/mod.rs:37-75` |
-| stop() | `src/audio/mod.rs:77-105` |
-
----
-
-*关联: [接口定义](./interface.md)*
+1. 实现 AudioRecorder
+2. 实现 AudioPlayer
+3. 集成到主流程
