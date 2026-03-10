@@ -1,0 +1,27 @@
+[package]
+name = "echovoice-tauri"
+version = "0.1.0"
+description = "EchoVoice - AI Voice Input"
+authors = ["EchoVoice Team"]
+license = "MIT"
+repository = "https://github.com/OpeNopEn2007/EchoVoice"
+edition = "2021"
+rust-version = "1.70"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# EchoVoice modules
+echovoice-audio = { path = "../crates/audio" }
+echovoice-asr = { path = "../crates/asr" }
+echovoice-llm = { path = "../crates/llm" }
+echovoice-config = { path = "../crates/config" }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
