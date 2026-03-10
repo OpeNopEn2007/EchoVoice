@@ -1,0 +1,11 @@
+[package]
+name = "echovoice-asr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+whisper-rs = "0.8"
+thiserror = "1.0"
+
+[dev-dependencies]
+anyhow = "1.0"
