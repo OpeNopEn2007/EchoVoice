@@ -1,0 +1,11 @@
+[package]
+name = "echovoice-llm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+llama-cpp-2 = "0.1"
+thiserror = "1.0"
+
+[dev-dependencies]
+anyhow = "1.0"
