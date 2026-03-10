@@ -1,0 +1,11 @@
+[package]
+name = "echovoice-tray"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tray-icon = "0.9"
+thiserror = "1.0"
+
+[dev-dependencies]
+anyhow = "1.0"
