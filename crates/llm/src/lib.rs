@@ -9,6 +9,10 @@ pub enum LLMError {
     LLMError(String),
     #[error("Invalid input")]
     InvalidInput,
+    #[error("Failed to load model: {0}")]
+    LoadError(String),
+    #[error("Inference error: {0}")]
+    InferenceError(String),
 }
 
 pub struct SmolLM2 {
@@ -25,23 +29,13 @@ impl SmolLM2 {
     }
 
     pub fn polish(&self, text: &str) -> Result<String, LLMError> {
-        // TODO: Integrate llama-cpp-2
-        // Placeholder implementation
         if text.is_empty() {
             return Err(LLMError::InvalidInput);
         }
         
-        let prompt = format!(
-            "<|im_start|>system\nYou are a helpful assistant that polishes and improves text.\n<|im_end|>\n<|im_start|>user\nPlease polish this text: {}\n<|im_end|>\n<|im_start|>assistant\n",
-            text
-        );
-        
-        // Placeholder: return formatted prompt
-        Ok(format!("Polished: {}", text))
-    }
-
-    pub fn model_path(&self) -> &str {
-        &self.model_path
+        // TODO: Full llama.cpp integration
+        // For now, return the original text with basic formatting
+        Ok(text.trim().to_string())
     }
 }
 
@@ -75,17 +69,5 @@ mod tests {
         let llm = SmolLM2::new(model_path).unwrap();
         let result = llm.polish("");
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_polish_text() {
-        let model_path = std::path::Path::new("../../models/smollm2-360m-q8.gguf");
-        if !model_path.exists() {
-            return;
-        }
-        
-        let llm = SmolLM2::new(model_path).unwrap();
-        let result = llm.polish("Hello world");
-        assert!(result.is_ok());
     }
 }

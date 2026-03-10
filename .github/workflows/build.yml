@@ -11,15 +11,22 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Install Rust
-      uses: dtolnay/rust-action@stable
+      uses: dtolnay/rust-toolchain@stable
     - name: Install Tauri
       run: cargo install tauri-cli
+    - name: Download models
+      run: |
+        mkdir -p models
+        curl -L -o models/ggml-base.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin"
+        curl -L -o models/smollm2-360m-q8.gguf "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q8_0.gguf"
     - name: Build
+      env:
+        CMAKE_POLICY_VERSION_MINIMUM: "3.5"
       run: cd src-tauri && cargo tauri build
     - name: Upload DMG
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: EchoVoice-macOS
         path: target/release/bundle/dmg/*.dmg
@@ -27,15 +34,22 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Install Rust
-      uses: dtolnay/rust-action@stable
+      uses: dtolnay/rust-toolchain@stable
     - name: Install Tauri
       run: cargo install tauri-cli
+    - name: Download models
+      run: |
+        mkdir -p models
+        curl -L -o models/ggml-base.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin"
+        curl -L -o models/smollm2-360m-q8.gguf "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q8_0.gguf"
     - name: Build
+      env:
+        CMAKE_POLICY_VERSION_MINIMUM: "3.5"
       run: cd src-tauri && cargo tauri build
     - name: Upload MSI
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: EchoVoice-Windows
         path: target/release/bundle/msi/*.msi
