@@ -7,6 +7,12 @@ edition = "2021"
 name = "echovoice"
 path = "src/main.rs"
 
+[dependencies]
+echovoice-audio = { path = "crates/audio" }
+echovoice-asr = { path = "crates/asr" }
+echovoice-llm = { path = "crates/llm" }
+anyhow = "1.0"
+
 [workspace]
 members = [
     "crates/audio",
