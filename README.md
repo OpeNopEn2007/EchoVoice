@@ -1,152 +1,71 @@
 # EchoVoice
 
-> 轻量级 AI 语音输入法 - 自由说，智能润色
+轻量级 AI 语音输入法 - 本地运行，隐私优先
 
-[English](./i18n/README.en.md) | [日本語](./i18n/README.ja.md) (计划中)
+## 功能
 
----
+- 🎤 语音输入：按住 F9 录音，自动识别并润色文本
+- 🧠 本地 AI：使用 Whisper + SmolLM2，无需联网
+- 🔒 隐私保护：所有处理在本地完成
+- ⚡ 快速响应：优化的本地模型，实时处理
 
-## 一句话介绍
+## 安装
 
-EchoVoice 是一个**纯本地运行**的 AI 语音输入法，让你自由表达，无需担心"一口气说完美"的压力。录音 → 识别 → 润色 → 上屏，一气呵成。
-
----
-
-## 核心特性
-
-| 特性 | 说明 |
-|------|------|
-| 🎯 **自由表达** | 边说边整理，不必一口气说完美 |
-| 🔒 **纯本地** | 所有模型本地运行，语音数据永不离开设备 |
-| 📱 **跨平台** | iOS / Android / Windows / macOS / Linux |
-| ⚡ **轻量级** | 手机端 <600MB 内存，桌面端 <2.5GB |
-| 🎨 **Apple风格** | 极简设计，无缝集成系统 |
-| 🔧 **可扩展** | 支持自定义模型和云端API |
-
----
-
-## 快速开始
-
-### 安装
+### 下载模型
 
 ```bash
-# macOS
-brew install echovoice
+# Whisper base (141MB)
+curl -L -o models/ggml-base.bin \
+  "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin"
 
-# Windows (Winget)
-winget install EchoVoice
-
-# Linux
-curl -fsSL https://echovoice.dev/install.sh | sh
+# SmolLM2 360M (368MB)
+curl -L -o models/smollm2-360m-q8.gguf \
+  "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q8_0.gguf"
 ```
 
-### 使用
+### 编译
 
-**桌面端**：
-1. 按下 `F9` 或 `Capslock` 开始录音
-2. 自由说话，不必担心停顿
-3. 释放按键，自动识别并润色
-4. 文本自动上屏到当前光标位置
-
-**移动端**：
-1. 长按悬浮球开始录音
-2. 说完后松开，自动处理
-3. 文本自动输入
-
----
-
-## 技术架构
-
-```
-用户按键 → 录音 → ASR识别 → LLM润色 → 键盘上屏
+```bash
+# macOS 需要 Accessibility 权限
+cargo build --release
 ```
 
-| 组件 | 技术 | 模型 |
-|------|------|------|
-| 音频录制 | cpal | - |
-| ASR识别 | whisper.cpp | Whisper tiny/base |
-| LLM润色 | llama.cpp | SmolLM2 360M/1.7B |
-| 快捷键 | global-hotkey | - |
-| 键盘输入 | enigo | - |
+## 使用
 
----
+```bash
+./target/release/echovoice
+```
 
-## 多端支持
-
-| 平台 | 触发方式 | 模型大小 | 内存占用 |
-|------|---------|---------|---------|
-| 桌面端 | F9 / Capslock | 1.1GB | ~2.5GB |
-| 移动端 | 悬浮球长按 | 280MB | ~600MB |
-
----
+1. 按 F9 开始录音
+2. 说话（3秒自动停止）
+3. 自动识别并润色
+4. 文本自动复制到剪贴板
 
 ## 配置
 
+配置文件：`~/.config/echovoice/config.yaml`
+
 ```yaml
-# ~/.config/echovoice/config.yaml
 hotkey:
   primary: "F9"
-  secondary: "CapsLock"
 
 asr:
-  model: "whisper-tiny"  # 或 whisper-base
+  model: "whisper-base"
   language: "auto"
 
 llm:
-  model: "smollm2-360m"  # 或 smollm2-1.7b
-  system_prompt: |
-    你是一个智能文本助手...
-
-mobile:
-  float_ball_opacity: 0.8
-  float_ball_size: 56
+  model: "smollm2-360m"
 ```
 
----
+## 技术栈
 
-## 开发
-
-参见 [开发文档](./.dev/README.md)
-
-### 快速构建
-
-```bash
-git clone https://github.com/openopen/echovoice.git
-cd echovoice
-
-# 桌面端
-cd desktop
-cargo build --release
-
-# 移动端
-cd mobile
-flutter build
-```
-
----
-
-## 路线图
-
-- [x] 架构设计
-- [x] 技术选型
-- [ ] 桌面端 MVP
-- [ ] 移动端 MVP
-- [ ] 配置系统
-- [ ] 云端API支持
-- [ ] 插件系统
-
----
-
-## 贡献
-
-参见 [贡献指南](./CONTRIBUTING.md)
-
----
+- Rust + Cargo
+- whisper.cpp (ASR)
+- llama.cpp (LLM)
+- cpal (音频)
+- rdev (全局热键)
+- tray-icon (系统托盘)
 
 ## 许可证
 
-[MIT](./LICENSE)
-
----
-
-*Made with ❤️ by OpenOpen*
+MIT
