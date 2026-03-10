@@ -1,3 +1,12 @@
+[package]
+name = "echovoice"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "echovoice"
+path = "src/main.rs"
+
 [workspace]
 members = [
     "crates/audio",
