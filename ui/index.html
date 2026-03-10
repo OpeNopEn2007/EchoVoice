@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EchoVoice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+        
+        .record-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .record-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        }
+        
+        .record-btn.recording {
+            background: #ff4757;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .record-icon {
+            width: 40px;
+            height: 40px;
+            fill: #667eea;
+        }
+        
+        .record-btn.recording .record-icon {
+            fill: white;
+        }
+        
+        .status {
+            font-size: 16px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        .result {
+            background: rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 30px;
+            min-width: 400px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .result-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+        
+        .result-text {
+            font-size: 18px;
+            line-height: 1.6;
+            min-height: 60px;
+        }
+        
+        .shortcut {
+            position: absolute;
+            bottom: 20px;
+            font-size: 14px;
+            opacity: 0.6;
+        }
+        
+        .settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .settings-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <button class="settings-btn" onclick="openSettings()">设置</button>
+    
+    <div class="container">
+        <h1>EchoVoice</h1>
+        <p class="subtitle">AI 语音输入法</p>
+        
+        <button class="record-btn" id="recordBtn" onclick="toggleRecording()">
+            <svg class="record-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"/>
+            </svg>
+        </button>
+        
+        <p class="status" id="status">按 F9 或点击按钮开始录音</p>
+        
+        <div class="result">
+            <div class="result-label">识别结果</div>
+            <div class="result-text" id="resultText">等待录音...</div>
+        </div>
+    </div>
+    
+    <p class="shortcut">快捷键: F9</p>
+    
+    <script>
+        let isRecording = false;
+        
+        async function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+        
+        async function startRecording() {
+            isRecording = true;
+            document.getElementById('recordBtn').classList.add('recording');
+            document.getElementById('status').textContent = '录音中...';
+            document.getElementById('resultText').textContent = '正在聆听...';
+            
+            try {
+                await invoke('start_recording');
+                
+                // Auto stop after 3 seconds
+                setTimeout(stopRecording, 3000);
+            } catch (e) {
+                console.error(e);
+                isRecording = false;
+                document.getElementById('recordBtn').classList.remove('recording');
+                document.getElementById('status').textContent = '录音失败';
+            }
+        }
+        
+        async function stopRecording() {
+            if (!isRecording) return;
+            
+            isRecording = false;
+            document.getElementById('recordBtn').classList.remove('recording');
+            document.getElementById('status').textContent = '处理中...';
+            
+            try {
+                const text = await invoke('stop_and_transcribe');
+                document.getElementById('resultText').textContent = text;
+                
+                if (text) {
+                    document.getElementById('status').textContent = '润色中...';
+                    const polished = await invoke('polish_text', { text });
+                    document.getElementById('resultText').textContent = polished;
+                    
+                    await invoke('copy_to_clipboard', { text: polished });
+                    document.getElementById('status').textContent = '已复制到剪贴板';
+                } else {
+                    document.getElementById('status').textContent = '未识别到语音';
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('status').textContent = '处理失败';
+            }
+        }
+        
+        function openSettings() {
+            // TODO: Open settings window
+            alert('设置功能开发中');
+        }
+        
+        // Listen for F9 key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F9') {
+                e.preventDefault();
+                toggleRecording();
+            }
+        });
+    </script>
+</body>
+</html>
