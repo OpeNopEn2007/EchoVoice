@@ -93,12 +93,13 @@ impl SmolLM2 {
         let tokens = self.model.str_to_token(&prompt, llama_cpp_2::model::AddBos::Always)
             .map_err(|e| LLMError::TokenizationError(format!("{:?}", e)))?;
 
-        // Create batch
+        // Create batch - allocate enough space for prompt + generation
         let n_tokens = tokens.len();
-        let mut batch = llama_cpp_2::llama_batch::LlamaBatch::new(n_tokens, 1);
+        let mut batch = llama_cpp_2::llama_batch::LlamaBatch::new(512, 1);
         
         for (i, &token) in tokens.iter().enumerate() {
-            batch.add(token, i as i32, &[0], false).map_err(|e| {
+            let is_last = i == tokens.len() - 1;
+            batch.add(token, i as i32, &[0], is_last).map_err(|e| {
                 LLMError::GenerationError(format!("Batch add failed: {:?}", e))
             })?;
         }
@@ -114,13 +115,17 @@ impl SmolLM2 {
             LlamaSampler::dist(0),
         ]);
 
+        // Track position for batch
+        let mut n_cur = batch.n_tokens() as i32;
+        
         // Generate tokens
         let mut generated_tokens = Vec::new();
         let max_tokens = 256;
         let eos_token = self.model.token_eos();
         
         for _ in 0..max_tokens {
-            let token = sampler.sample(&ctx, 0);
+            // Sample from the last token's logits
+            let token = sampler.sample(&ctx, batch.n_tokens() - 1);
             
             if token == eos_token {
                 break;
@@ -128,12 +133,14 @@ impl SmolLM2 {
             
             generated_tokens.push(token);
 
-            // Decode the new token
-            let mut new_batch = llama_cpp_2::llama_batch::LlamaBatch::new(1, 1);
-            new_batch.add(token, 0, &[0], false)
+            // Prepare batch for next token
+            batch.clear();
+            batch.add(token, n_cur, &[0], true)
                 .map_err(|e| LLMError::GenerationError(format!("Batch add failed: {:?}", e)))?;
             
-            ctx.decode(&mut new_batch)
+            n_cur += 1;
+            
+            ctx.decode(&mut batch)
                 .map_err(|e| LLMError::GenerationError(format!("Decode failed: {:?}", e)))?;
             
             sampler.accept(token);
