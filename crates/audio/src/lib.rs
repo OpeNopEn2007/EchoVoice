@@ -212,6 +212,75 @@ impl AudioPlayer {
 
         self.play(&samples)
     }
+
+    /// 播放开始录音提示音 - 高频短音（1000Hz, 50ms）
+    pub fn play_recording_start(&mut self) -> Result<(), AudioError> {
+        let frequency = 1000.0;
+        let duration_ms = 50;
+        let num_samples = (SAMPLE_RATE as f32 * duration_ms as f32 / 1000.0) as usize;
+
+        let mut samples = Vec::with_capacity(num_samples);
+        for i in 0..num_samples {
+            let t = i as f32 / SAMPLE_RATE as f32;
+            // 添加淡入淡出效果
+            let envelope = Self::envelope(i, num_samples);
+            let sample = (2.0 * std::f32::consts::PI * frequency * t).sin() * 0.4 * envelope;
+            samples.push(sample);
+        }
+
+        self.play(&samples)
+    }
+
+    /// 播放停止录音提示音 - 中频短音（600Hz, 50ms）
+    pub fn play_recording_stop(&mut self) -> Result<(), AudioError> {
+        let frequency = 600.0;
+        let duration_ms = 50;
+        let num_samples = (SAMPLE_RATE as f32 * duration_ms as f32 / 1000.0) as usize;
+
+        let mut samples = Vec::with_capacity(num_samples);
+        for i in 0..num_samples {
+            let t = i as f32 / SAMPLE_RATE as f32;
+            let envelope = Self::envelope(i, num_samples);
+            let sample = (2.0 * std::f32::consts::PI * frequency * t).sin() * 0.4 * envelope;
+            samples.push(sample);
+        }
+
+        self.play(&samples)
+    }
+
+    /// 播放处理完成提示音 - 双音调上升（800Hz -> 1200Hz）
+    pub fn play_processing_done(&mut self) -> Result<(), AudioError> {
+        let duration_ms = 150;
+        let num_samples = (SAMPLE_RATE as f32 * duration_ms as f32 / 1000.0) as usize;
+
+        let mut samples = Vec::with_capacity(num_samples);
+        for i in 0..num_samples {
+            let t = i as f32 / SAMPLE_RATE as f32;
+            // 频率从 800Hz 线性上升到 1200Hz
+            let progress = i as f32 / num_samples as f32;
+            let frequency = 800.0 + (1200.0 - 800.0) * progress;
+            let envelope = Self::envelope(i, num_samples);
+            let sample = (2.0 * std::f32::consts::PI * frequency * t).sin() * 0.4 * envelope;
+            samples.push(sample);
+        }
+
+        self.play(&samples)
+    }
+
+    /// 淡入淡出包络函数
+    fn envelope(sample_index: usize, total_samples: usize) -> f32 {
+        let fade_samples = (total_samples as f32 * 0.1) as usize; // 10% 淡入淡出
+        if sample_index < fade_samples {
+            // 淡入
+            sample_index as f32 / fade_samples as f32
+        } else if sample_index > total_samples - fade_samples {
+            // 淡出
+            (total_samples - sample_index) as f32 / fade_samples as f32
+        } else {
+            // 保持
+            1.0
+        }
+    }
 }
 
 #[cfg(test)]

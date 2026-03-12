@@ -161,9 +161,9 @@ fn main() -> anyhow::Result<()> {
                 } else {
                     is_recording = true;
                     println!("\n[Recording...]");
-                    // 播放开始提示音
+                    // 播放开始提示音（高频）
                     if config.ui.sound.enabled && config.ui.sound.recording_start {
-                        let _ = player.play_beep();
+                        let _ = player.play_recording_start();
                     }
                 }
             }
@@ -180,6 +180,11 @@ fn main() -> anyhow::Result<()> {
                 } else {
                     is_recording = false;
                     println!("[Stopped]");
+
+                    // 播放停止提示音（中频）
+                    if config.ui.sound.enabled {
+                        let _ = player.play_recording_stop();
+                    }
 
                     // 获取录音数据并处理
                     let audio = recorder.get_recorded_data().unwrap_or_default();
@@ -253,8 +258,8 @@ fn process_recording(
         eprintln!("Failed to copy to clipboard");
     }
 
-    // 播放完成提示音
+    // 播放完成提示音（上升双音调）
     if sound_config.enabled && sound_config.processing_done {
-        let _ = player.play_beep();
+        let _ = player.play_processing_done();
     }
 }
