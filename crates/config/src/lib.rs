@@ -2,6 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use thiserror::Error;
 
+#[cfg(feature = "hot-reload")]
+pub mod watcher;
+
 #[derive(Error, Debug)]
 pub enum ConfigError {
     #[error("IO error: {0}")]
@@ -61,6 +64,26 @@ impl Default for LlmConfig {
 pub struct UiConfig {
     pub float_ball_opacity: f32,
     pub theme: String,
+    pub sound: SoundConfig,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SoundConfig {
+    pub enabled: bool,
+    pub startup: bool,
+    pub recording_start: bool,
+    pub processing_done: bool,
+}
+
+impl Default for SoundConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            startup: true,
+            recording_start: true,
+            processing_done: true,
+        }
+    }
 }
 
 impl Default for UiConfig {
@@ -68,27 +91,17 @@ impl Default for UiConfig {
         Self {
             float_ball_opacity: 0.8,
             theme: "auto".to_string(),
+            sound: SoundConfig::default(),
         }
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     pub hotkey: HotkeyConfig,
     pub asr: AsrConfig,
     pub llm: LlmConfig,
     pub ui: UiConfig,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            hotkey: HotkeyConfig::default(),
-            asr: AsrConfig::default(),
-            llm: LlmConfig::default(),
-            ui: UiConfig::default(),
-        }
-    }
 }
 
 impl Config {

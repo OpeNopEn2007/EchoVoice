@@ -94,7 +94,7 @@ impl SmolLM2 {
             .map_err(|e| LLMError::TokenizationError(format!("{:?}", e)))?;
 
         // Create batch - allocate enough space for prompt + generation
-        let n_tokens = tokens.len();
+        let _n_tokens = tokens.len();
         let mut batch = llama_cpp_2::llama_batch::LlamaBatch::new(512, 1);
         
         for (i, &token) in tokens.iter().enumerate() {
@@ -116,7 +116,7 @@ impl SmolLM2 {
         ]);
 
         // Track position for batch
-        let mut n_cur = batch.n_tokens() as i32;
+        let mut n_cur = batch.n_tokens();
         
         // Generate tokens
         let mut generated_tokens = Vec::new();
