@@ -1,0 +1,28 @@
+[package]
+name = "echovoice-floating"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+thiserror = "1.0"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.52", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_Shell",
+] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = "0.2"
+cocoa = "0.25"
+core-graphics = "0.23"
+
+[features]
+default = []
+
+[package.metadata.docs.rs]
+all-features = true

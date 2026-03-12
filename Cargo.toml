@@ -26,6 +26,7 @@ members = [
     "crates/config",
     "crates/hotkey",
     "crates/output",
+    "crates/floating",
     "src-tauri",
 ]
 resolver = "2"
