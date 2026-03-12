@@ -13,7 +13,10 @@ echovoice-asr = { path = "crates/asr" }
 echovoice-llm = { path = "crates/llm" }
 echovoice-config = { path = "crates/config" }
 echovoice-hotkey = { path = "crates/hotkey" }
+echovoice-output = { path = "crates/output" }
 anyhow = "1.0"
+arboard = "3"
+rdev = "0.5"
 
 [workspace]
 members = [
@@ -22,6 +25,7 @@ members = [
     "crates/llm",
     "crates/config",
     "crates/hotkey",
+    "crates/output",
     "src-tauri",
 ]
 resolver = "2"
