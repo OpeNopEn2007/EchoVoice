@@ -91,11 +91,23 @@
 **目标**：生成可分发安装包
 
 **任务清单**:
-- [ ] 5.1 Windows 构建 + 打包 MSI
+- [ ] 5.1 Windows 构建 + 打包 MSI（在 Windows 端机器上执行，见 WINDOWS_DEV_GUIDE.md）
 - [x] 5.2 macOS 构建 + 签名 + 打包 DMG
 - [x] 5.3 编写安装说明
+- [x] 5.4 编写 Windows 端开发协作指南
 
-**状态**: 🔄 进行中（macOS 完成，Windows 待环境）
+**状态**: 🔄 进行中（macOS 完成，Windows 端需按指南在 Windows 机器上执行）
+
+**Windows 端协作方案**：
+由于 macOS 无法直接编译 Windows 二进制（llama.cpp 交叉编译失败），采用双机协作：
+1. macOS 端：完成核心代码和 macOS 构建 ✅
+2. Windows 端：参考 `WINDOWS_DEV_GUIDE.md`，在 Windows 机器上运行 Claude Code 完成 Windows 端构建
+
+**Windows 端待办**：
+- [ ] 验证 Windows 悬浮胶囊编译（`cargo build -p echovoice-floating`）
+- [ ] 测试悬浮胶囊显示和动画
+- [ ] 添加 Windows 剪贴板支持（`src-tauri/src/main.rs` 中的 `copy_to_clipboard`）
+- [ ] 创建 Windows MSI 安装包
 
 ---
 
