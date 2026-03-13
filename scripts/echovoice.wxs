@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="EchoVoice" Language="1033" Version="0.1.0" Manufacturer="EchoVoice Team" UpgradeCode="12345678-1234-1234-1234-123456789012">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of EchoVoice is already installed." />
+    <MediaTemplate />
+
+    <Feature Id="ProductFeature" Title="EchoVoice" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+
+    <Icon Id="EchoVoiceIcon.exe" SourceFile="$(var.SourceDir)\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="EchoVoiceIcon.exe" />
+
+    <!-- License agreement -->
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.SourceDir)\..\LICENSE" />
+
+    <!-- UI -->
+    <UIRef Id="WixUI_InstallDir" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="EchoVoice">
+          <Directory Id="MODELSFOLDER" Name="models" />
+        </Directory>
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="EchoVoice" />
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <!-- Main executable -->
+      <Component Id="EchoVoiceExecutable" Guid="*">
+        <File Id="EchoVoiceExe" Source="$(var.SourceDir)\echovoice.exe" KeyPath="yes">
+          <Shortcut Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Name="EchoVoice" Advertise="yes" Icon="EchoVoiceIcon.exe" />
+          <Shortcut Id="DesktopShortcut" Directory="DesktopFolder" Name="EchoVoice" Advertise="yes" Icon="EchoVoiceIcon.exe" />
+        </File>
+      </Component>
+
+      <!-- DLLs and dependencies -->
+      <Component Id="EchoVoiceDependencies" Guid="*">
+        <File Id="DLLFiles" Source="$(var.SourceDir)\*.dll" KeyPath="yes" />
+      </Component>
+
+      <!-- Models folder placeholder -->
+      <Component Id="ModelsFolder" Guid="*">
+        <CreateFolder Directory="MODELSFOLDER">
+          <PermissionEx GenericAll="yes" />
+        </CreateFolder>
+      </Component>
+
+      <!-- Registry entries -->
+      <Component Id="RegistryEntries" Guid="*">
+        <RegistryKey Root="HKCU" Key="Software\EchoVoice">
+          <RegistryValue Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+        </RegistryKey>
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
