@@ -4,9 +4,9 @@
 //! 参考微信输入法效果：深色半透明背景，圆角 16px，三个白点跳动动画
 
 use crate::{CapsuleState, CapsuleWindow, FloatingError, CAPSULE_HEIGHT, CAPSULE_WIDTH};
+use std::ffi::c_void;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use windows::{
     core::*,
@@ -15,9 +15,7 @@ use windows::{
     Win32::Graphics::Direct2D::Common::*,
     Win32::Graphics::Dxgi::Common::*,
     Win32::Graphics::Gdi::*,
-    Win32::Graphics::Imaging::*,
     Win32::System::LibraryLoader::GetModuleHandleW,
-    Win32::System::Performance::{QueryPerformanceCounter, QueryPerformanceFrequency},
     Win32::UI::WindowsAndMessaging::*,
 };
 
@@ -37,11 +35,11 @@ pub struct WindowsCapsule {
     d2d_factory: ID2D1Factory,
     render_target: Option<ID2D1DCRenderTarget>,
     // 字体资源
-    text_format: Option<IDWriteTextFormat>,
+    text_format: Option<windows::Win32::Graphics::DirectWrite::IDWriteTextFormat>,
 }
 
 impl WindowsCapsule {
-    pub fn new() -> Result<Self, FloatingError> {
+    pub fn new() -> std::result::Result<Self, FloatingError> {
         unsafe {
             // 创建 Direct2D 工厂
             let d2d_factory = D2D1CreateFactory::<ID2D1Factory>(
@@ -53,13 +51,13 @@ impl WindowsCapsule {
             let instance = GetModuleHandleW(None)
                 .map_err(|e| FloatingError::WindowCreationFailed(format!("GetModuleHandle failed: {}", e)))?;
 
-            let class_name: HSTRING = w!("EchoVoiceCapsuleWindow").into();
+            let class_name = w!("EchoVoiceCapsuleWindow");
 
             let wc = WNDCLASSEXW {
                 cbSize: std::mem::size_of::<WNDCLASSEXW>() as u32,
                 lpfnWndProc: Some(window_proc),
                 hInstance: instance.into(),
-                lpszClassName: windows::core::PCWSTR(class_name.as_ptr()),
+                lpszClassName: class_name,
                 hCursor: LoadCursorW(None, IDC_ARROW)
                     .map_err(|e| FloatingError::WindowCreationFailed(format!("LoadCursor failed: {}", e)))?,
                 ..Default::default()
@@ -73,7 +71,7 @@ impl WindowsCapsule {
             // 创建分层窗口
             let hwnd = CreateWindowExW(
                 WINDOW_EX_STYLE(WS_EX_LAYERED.0 | WS_EX_TOOLWINDOW.0 | WS_EX_NOACTIVATE.0),
-                &class_name,
+                class_name,
                 w!("EchoVoice Capsule"),
                 WINDOW_STYLE(WS_POPUP.0),
                 0, 0, CAPSULE_WIDTH, CAPSULE_HEIGHT,
@@ -81,8 +79,11 @@ impl WindowsCapsule {
                 None,
                 instance,
                 None,
-            )
-            .map_err(|e| FloatingError::WindowCreationFailed(format!("CreateWindowEx failed: {}", e)))?;
+            );
+
+            if hwnd.0 == 0 {
+                return Err(FloatingError::WindowCreationFailed("CreateWindowEx failed".to_string()));
+            }
 
             // 设置窗口透明色（用于 UpdateLayeredWindow）
             let _ = SetLayeredWindowAttributes(hwnd, COLORREF(0), 0, LWA_COLORKEY);
@@ -128,7 +129,7 @@ impl WindowsCapsule {
     }
 
     /// 渲染胶囊到内存 DC
-    fn render(&self) -> Result<(HBITMAP, HDC, i32, i32), FloatingError> {
+    fn render(&self) -> std::result::Result<(HBITMAP, HDC, i32, i32), FloatingError> {
         unsafe {
             let width = CAPSULE_WIDTH;
             let height = CAPSULE_HEIGHT;
@@ -158,7 +159,7 @@ impl WindowsCapsule {
                 &bmi,
                 DIB_RGB_COLORS,
                 &mut bits as *mut _ as *mut *mut c_void,
-                HANDLE(std::ptr::null_mut()),
+                HANDLE(0),
                 0,
             )
             .map_err(|e| FloatingError::RenderFailed(format!("CreateDIBSection failed: {}", e)))?;
@@ -299,13 +300,26 @@ impl WindowsCapsule {
                     bottom: height as f32,
                 };
 
-                render_target.DrawText(
+                // Use DrawTextW from GDI or create a text layout and draw it
+                // For Direct2D, we need to use the ID2D1RenderTarget trait methods
+                // DrawText is available via the ID2D1RenderTarget interface
+                let dwrite_factory = windows::Win32::Graphics::DirectWrite::DWriteCreateFactory::<
+                    windows::Win32::Graphics::DirectWrite::IDWriteFactory,
+                >(windows::Win32::Graphics::DirectWrite::DWRITE_FACTORY_TYPE_SHARED)
+                .map_err(|_| FloatingError::RenderFailed("DWriteCreateFactory failed".to_string()))?;
+
+                let text_layout = dwrite_factory.CreateTextLayout(
                     &text_utf16,
                     self.text_format.as_ref().unwrap(),
-                    &layout_rect,
+                    layout_rect.right - layout_rect.left,
+                    layout_rect.bottom - layout_rect.top,
+                ).map_err(|e| FloatingError::RenderFailed(format!("CreateTextLayout failed: {}", e)))?;
+
+                render_target.DrawTextLayout(
+                    D2D_POINT_2F { x: layout_rect.left, y: layout_rect.top },
+                    &text_layout,
                     &text_brush,
                     D2D1_DRAW_TEXT_OPTIONS_NONE,
-                    DWRITE_MEASURING_MODE_NATURAL,
                 );
             }
 
@@ -319,7 +333,7 @@ impl WindowsCapsule {
         }
     }
 
-    fn update_layered_window(&self) -> Result<(), FloatingError> {
+    fn update_layered_window(&self) -> std::result::Result<(), FloatingError> {
         unsafe {
             let (hbitmap, screen_dc, width, height) = self.render()?;
 
@@ -334,10 +348,10 @@ impl WindowsCapsule {
             };
             let pt_src = POINT { x: 0, y: 0 };
             let mut blend = BLENDFUNCTION {
-                BlendOp: AC_SRC_OVER.0 as u8,
+                BlendOp: AC_SRC_OVER as u8,
                 BlendFlags: 0,
                 SourceConstantAlpha: 255,
-                AlphaFormat: AC_SRC_ALPHA.0 as u8,
+                AlphaFormat: AC_SRC_ALPHA as u8,
             };
 
             // 更新分层窗口
@@ -347,9 +361,9 @@ impl WindowsCapsule {
                 Some(&pt_dst),
                 Some(&size),
                 mem_dc,
-                &pt_src,
+                Some(&pt_src as *const POINT),
                 COLORREF(0),
-                &mut blend,
+                Some(&blend as *const BLENDFUNCTION),
                 ULW_ALPHA,
             )
             .map_err(|e| FloatingError::RenderFailed(format!("UpdateLayeredWindow failed: {}", e)))?;
@@ -375,14 +389,14 @@ impl WindowsCapsule {
 }
 
 impl CapsuleWindow for WindowsCapsule {
-    fn new() -> Result<Self, FloatingError>
+    fn new() -> std::result::Result<Self, FloatingError>
     where
         Self: Sized,
     {
         Self::new()
     }
 
-    fn show(&self, x: i32, y: i32) -> Result<(), FloatingError> {
+    fn show(&self, x: i32, y: i32) -> std::result::Result<(), FloatingError> {
         unsafe {
             // 设置窗口位置
             SetWindowPos(
@@ -411,7 +425,7 @@ impl CapsuleWindow for WindowsCapsule {
         Ok(())
     }
 
-    fn hide(&self) -> Result<(), FloatingError> {
+    fn hide(&self) -> std::result::Result<(), FloatingError> {
         unsafe {
             ShowWindow(self.hwnd, SW_HIDE);
             KillTimer(self.hwnd, 1);
@@ -422,7 +436,7 @@ impl CapsuleWindow for WindowsCapsule {
         Ok(())
     }
 
-    fn set_state(&mut self, state: CapsuleState) -> Result<(), FloatingError> {
+    fn set_state(&mut self, state: CapsuleState) -> std::result::Result<(), FloatingError> {
         self.state = state;
 
         // 重新渲染
@@ -433,17 +447,17 @@ impl CapsuleWindow for WindowsCapsule {
         Ok(())
     }
 
-    fn update_waveform(&mut self, _levels: &[f32]) -> Result<(), FloatingError> {
+    fn update_waveform(&mut self, _levels: &[f32]) -> std::result::Result<(), FloatingError> {
         // TODO: 根据音量更新动画强度
         Ok(())
     }
 
-    fn run_loop(&mut self) -> Result<(), FloatingError> {
+    fn run_loop(&mut self) -> std::result::Result<(), FloatingError> {
         // Windows 消息循环在主线程中处理
         Ok(())
     }
 
-    fn close(&mut self) -> Result<(), FloatingError> {
+    fn close(&mut self) -> std::result::Result<(), FloatingError> {
         self.stop_animation();
         unsafe {
             DestroyWindow(self.hwnd);
