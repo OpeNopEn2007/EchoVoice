@@ -67,6 +67,13 @@ fn copy_to_clipboard(text: String) {
             .arg(&text)
             .spawn();
     }
+    #[cfg(target_os = "windows")]
+    {
+        use arboard::Clipboard;
+        if let Ok(mut clipboard) = Clipboard::new() {
+            let _ = clipboard.set_text(text);
+        }
+    }
 }
 
 // ========== 配置相关命令 ==========
