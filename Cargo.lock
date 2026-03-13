@@ -1018,6 +1018,7 @@ dependencies = [
  "echovoice-asr",
  "echovoice-audio",
  "echovoice-config",
+ "echovoice-floating",
  "echovoice-hotkey",
  "echovoice-llm",
  "echovoice-output",

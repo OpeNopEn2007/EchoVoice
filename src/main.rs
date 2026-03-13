@@ -5,6 +5,7 @@
 use echovoice_audio::{AudioPlayer, AudioRecorder};
 use echovoice_asr::WhisperASR;
 use echovoice_config::Config;
+use echovoice_floating::{CapsuleState, CapsuleWindow, NativeCapsule, calculate_position};
 use echovoice_hotkey::{parse_key, HotkeyEvent, HotkeyManager};
 use echovoice_llm::SmolLM2;
 use echovoice_output::OutputManager;

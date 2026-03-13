@@ -14,6 +14,7 @@ echovoice-llm = { path = "crates/llm" }
 echovoice-config = { path = "crates/config" }
 echovoice-hotkey = { path = "crates/hotkey" }
 echovoice-output = { path = "crates/output" }
+echovoice-floating = { path = "crates/floating" }
 anyhow = "1.0"
 arboard = "3"
 rdev = "0.5"
