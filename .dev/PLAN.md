@@ -59,15 +59,12 @@
 **目标**：macOS 版本可用
 
 **任务清单**:
-- [ ] 3.1 创建 crates/floating/ macOS 实现
-- [ ] 3.2 实现 NSVisualEffectView 毛玻璃效果
+- [x] 3.1 创建 crates/floating/ macOS 实现
+- [x] 3.2 实现 NSVisualEffectView 毛玻璃效果
 - [ ] 3.3 实现 Core Animation 点动画
-- [ ] 3.4 集成到主流程
+- [x] 3.4 集成到主流程（基础集成完成，待完善状态切换）
 
-**完成标准**:
-- 和 Windows 版本一致的视觉效果
-
-**预估时间**：3-4 小时
+**状态**: 🔄 进行中（macOS 胶囊窗口已实现，动画待完善）
 
 ---
 
