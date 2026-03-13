@@ -63,9 +63,25 @@ fn copy_to_clipboard(text: String) {
     #[cfg(target_os = "macos")]
     {
         use std::process::Command;
-        let _ = Command::new("pbcopy")
-            .arg(&text)
+        let mut child = Command::new("pbcopy")
+            .stdin(std::process::Stdio::piped())
+            .spawn()
+            .expect("Failed to start pbcopy");
+
+        use std::io::Write;
+        if let Some(stdin) = child.stdin.take() {
+            let mut stdin = stdin;
+            let _ = stdin.write_all(text.as_bytes());
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        let mut child = Command::new("powershell.exe")
+            .args(["-Command", "Set-Clipboard", "-Value", &text])
             .spawn();
+        let _ = child;
     }
 }
 
