@@ -104,10 +104,19 @@ pub struct Config {
     pub ui: UiConfig,
 }
 
+// 用于向后兼容的部分配置解析
+#[derive(Debug, Clone, Deserialize)]
+struct PartialConfig {
+    pub hotkey: Option<HotkeyConfig>,
+    pub asr: Option<AsrConfig>,
+    pub llm: Option<LlmConfig>,
+    pub ui: Option<UiConfig>,
+}
+
 impl Config {
     pub fn load() -> Result<Self, ConfigError> {
         let path = Self::config_path()?;
-        
+
         if !path.exists() {
             let config = Config::default();
             config.save()?;
@@ -115,7 +124,30 @@ impl Config {
         }
 
         let content = std::fs::read_to_string(&path)?;
-        let config: Config = serde_yaml::from_str(&content)?;
+        let config: Config = match serde_yaml::from_str(&content) {
+            Ok(c) => c,
+            Err(_) => {
+                // 解析失败，尝试用默认配置合并
+                let mut config = Config::default();
+                // 尝试部分解析旧配置
+                if let Ok(partial) = serde_yaml::from_str::<PartialConfig>(&content) {
+                    if let Some(hotkey) = partial.hotkey {
+                        config.hotkey = hotkey;
+                    }
+                    if let Some(asr) = partial.asr {
+                        config.asr = asr;
+                    }
+                    if let Some(llm) = partial.llm {
+                        config.llm = llm;
+                    }
+                    if let Some(ui) = partial.ui {
+                        config.ui = ui;
+                    }
+                }
+                config.save()?;
+                config
+            }
+        };
         Ok(config)
     }
 

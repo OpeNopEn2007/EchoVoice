@@ -96,7 +96,7 @@ fn open_settings_window(app: AppHandle) -> Result<(), String> {
         tauri::WebviewUrl::App("settings.html".into())
     )
     .title("设置 - EchoVoice")
-    .inner_size(600, 500)
+    .inner_size(600.0, 500.0)
     .resizable(false)
     .center()
     .build()
@@ -125,7 +125,8 @@ fn main() {
                         let _ = recorder.start();
                     }
                     AudioCommand::StopRecording => {
-                        let audio = recorder.stop().unwrap_or_default();
+                        let _ = recorder.stop();
+                        let audio = recorder.get_recorded_data().unwrap_or_default();
                         let _ = data_tx.send(audio);
                     }
                 }
