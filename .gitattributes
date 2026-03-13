@@ -1,8 +1,8 @@
 # Linguist overrides - ignore generated files
-src-tauri/gen/** linguist-vendored
-src-tauri/icons/** linguist-vendored
-target/** linguist-vendored
-Cargo.lock linguist-vendored
+src-tauri/gen/** linguist-generated
+src-tauri/icons/** linguist-generated
+target/** linguist-generated
+Cargo.lock linguist-generated
 
 # Mark source files
 *.rs linguist-language=Rust
