@@ -168,9 +168,13 @@ fn main() -> anyhow::Result<()> {
                     println!("\n[Recording...]");
 
                     // 显示胶囊窗口
-                    let (screen_w, screen_h) = echovoice_floating::macos::get_screen_size();
-                    let menu_height = echovoice_floating::macos::get_menu_bar_height();
-                    let (x, y) = calculate_position(screen_w, screen_h, menu_height);
+                    #[cfg(target_os = "macos")]
+                    let taskbar_height = echovoice_floating::get_menu_bar_height();
+                    #[cfg(target_os = "windows")]
+                    let taskbar_height = echovoice_floating::get_taskbar_height();
+
+                    let (screen_w, screen_h) = echovoice_floating::get_screen_size();
+                    let (x, y) = calculate_position(screen_w, screen_h, taskbar_height);
                     let _ = capsule.show(x, y);
                     let _ = capsule.set_state(CapsuleState::Recording);
 

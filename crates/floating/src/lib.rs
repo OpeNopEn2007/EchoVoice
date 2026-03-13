@@ -73,10 +73,10 @@ pub mod macos;
 
 // 平台特定导出
 #[cfg(target_os = "windows")]
-pub use windows::WindowsCapsule as NativeCapsule;
+pub use windows::{get_screen_size, get_taskbar_height, WindowsCapsule as NativeCapsule};
 
 #[cfg(target_os = "macos")]
-pub use macos::MacOSCapsule as NativeCapsule;
+pub use macos::{get_menu_bar_height, get_screen_size, MacOSCapsule as NativeCapsule};
 
 /// 创建平台原生胶囊窗口
 pub fn create_capsule() -> Result<NativeCapsule, FloatingError> {
