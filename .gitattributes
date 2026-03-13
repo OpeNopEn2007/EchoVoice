@@ -4,6 +4,11 @@ src-tauri/icons/** linguist-generated
 target/** linguist-generated
 Cargo.lock linguist-generated
 
+# Explicitly ignore Makefile in target directory
+target/**/Makefile linguist-generated
+target/**/makefile linguist-generated
+target/**/*.mk linguist-generated
+
 # Mark source files
 *.rs linguist-language=Rust
 *.toml linguist-language=TOML
