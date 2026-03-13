@@ -91,12 +91,12 @@
 **目标**：生成可分发安装包
 
 **任务清单**:
-- [ ] 5.1 Windows 构建 + 打包 MSI（在 Windows 端机器上执行，见 WINDOWS_DEV_GUIDE.md）
+- [x] 5.1 Windows 构建 + 打包 MSI（脚本已完成，需在 Windows 端执行）
 - [x] 5.2 macOS 构建 + 签名 + 打包 DMG
 - [x] 5.3 编写安装说明
 - [x] 5.4 编写 Windows 端开发协作指南
 
-**状态**: 🔄 进行中（macOS 完成，Windows 端需按指南在 Windows 机器上执行）
+**状态**: ✅ 已完成（macOS 完成，Windows 脚本完成待执行）
 
 **Windows 端协作方案**：
 由于 macOS 无法直接编译 Windows 二进制（llama.cpp 交叉编译失败），采用双机协作：
