@@ -9,6 +9,13 @@
 - 🔒 隐私保护：所有处理在本地完成
 - ⚡ 快速响应：优化的本地模型，实时处理
 
+## 平台支持
+
+| 平台 | 状态 | 说明 |
+|------|------|------|
+| macOS | ✅ 可用 | 完整功能，可直接编译运行 |
+| Windows | 🔄 代码完成 | 需 Windows 环境编译测试 |
+
 ## 安装
 
 ### 下载模型
@@ -23,12 +30,30 @@ curl -L -o models/smollm2-360m-q8.gguf \
   "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q8_0.gguf"
 ```
 
+或使用脚本：
+```bash
+# macOS/Linux
+./scripts/download-models.sh
+
+# Windows
+.\scripts\download-models.ps1
+```
+
 ### 编译
 
+**macOS：**
 ```bash
-# macOS 需要 Accessibility 权限
 cargo build --release
+./target/release/echovoice
 ```
+
+**Windows：**
+```powershell
+cargo build --release
+.\target\release\echovoice.exe
+```
+
+详细安装说明见 [INSTALL.md](INSTALL.md)。
 
 ## 使用
 
@@ -36,14 +61,38 @@ cargo build --release
 ./target/release/echovoice
 ```
 
-1. 按 F9 开始录音
-2. 说话（3秒自动停止）
-3. 自动识别并润色
-4. 文本自动复制到剪贴板
+1. 按住 F9 开始录音
+2. 说话
+3. 松开 F9 停止录音
+4. 自动识别、润色并复制到剪贴板
+
+## Windows 端开发协作
+
+由于 Windows 和 macOS 系统差异，采用以下协作方式：
+
+1. **macOS 端**：完成核心功能和 macOS UI
+2. **Windows 端**：参考 [WINDOWS_DEV_GUIDE.md](.dev/WINDOWS_DEV_GUIDE.md) 在 Windows 机器上完成编译测试
+
+### Windows 快速开始
+
+```powershell
+# 1. 克隆仓库
+git clone https://github.com/OpeNopEn2007/EchoVoice.git
+cd EchoVoice
+
+# 2. 阅读 Windows 开发指南
+code .dev\WINDOWS_DEV_GUIDE.md
+
+# 3. 运行 Claude Code
+claude
+
+# 4. 在 Claude Code 中执行
+# "读取 PLAN.md 检查进度，完成 Windows 端任务"
+```
 
 ## 配置
 
-配置文件：`~/.config/echovoice/config.yaml`
+配置文件：`~/.config/echovoice/config.yaml` (macOS) 或 `%APPDATA%\echovoice\config.yaml` (Windows)
 
 ```yaml
 hotkey:
@@ -65,6 +114,8 @@ llm:
 - cpal (音频)
 - rdev (全局热键)
 - tray-icon (系统托盘)
+- Tauri (设置面板)
+- Direct2D / Core Animation (悬浮胶囊)
 
 ## 许可证
 
