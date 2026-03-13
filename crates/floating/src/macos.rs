@@ -9,8 +9,7 @@ use objc::runtime::Class;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const DOT_SIZE: f64 = 4.0;
 const DOT_SPACING: f64 = 5.0;
@@ -195,12 +194,73 @@ impl MacOSCapsule {
         }
         self.animation_running.store(true, Ordering::SeqCst);
 
-        // TODO: 使用 NSTimer 或 CADisplayLink 实现线程安全的动画
-        // 目前暂时使用简单实现
+        unsafe {
+            let anim_class = Class::get("CABasicAnimation").unwrap();
+            let float_class = Class::get("NSNumber").unwrap();
+
+            // 获取当前时间作为动画起点
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs_f64();
+
+            for (i, dot) in self.dot_views.iter().enumerate() {
+                let layer: id = msg_send![*dot, layer];
+
+                // 创建位移动画（上下跳动）
+                let pos_anim: id = msg_send![anim_class, animationWithKeyPath:NSString::alloc(nil).init_str("transform.translation.y")];
+
+                // 从 0 跳到 -3（向上移动 3 像素）
+                let from_val: id = msg_send![float_class, numberWithFloat:0.0f32];
+                let to_val: id = msg_send![float_class, numberWithFloat:-3.0f32];
+                let _: () = msg_send![pos_anim, setFromValue:from_val];
+                let _: () = msg_send![pos_anim, setToValue:to_val];
+
+                // 设置动画属性
+                let _: () = msg_send![pos_anim, setDuration:0.3f64]; // 上跳耗时 0.3 秒
+                let _: () = msg_send![pos_anim, setAutoreverses:YES]; // 自动回弹
+                let _: () = msg_send![pos_anim, setRepeatCount:f32::MAX]; // 无限循环
+
+                // 设置延迟，实现依次跳动效果
+                let delay = i as f64 * 0.15f64;
+                let _: () = msg_send![pos_anim, setBeginTime:now + delay];
+
+                // 添加到 layer
+                let key = NSString::alloc(nil).init_str("bounce");
+                let _: () = msg_send![layer, addAnimation:pos_anim forKey:key];
+
+                // 创建透明度动画
+                let opacity_anim: id = msg_send![anim_class, animationWithKeyPath:NSString::alloc(nil).init_str("opacity")];
+                let from_opacity: id = msg_send![float_class, numberWithFloat:0.3f32];
+                let to_opacity: id = msg_send![float_class, numberWithFloat:1.0f32];
+                let _: () = msg_send![opacity_anim, setFromValue:from_opacity];
+                let _: () = msg_send![opacity_anim, setToValue:to_opacity];
+                let _: () = msg_send![opacity_anim, setDuration:0.3f64];
+                let _: () = msg_send![opacity_anim, setAutoreverses:YES];
+                let _: () = msg_send![opacity_anim, setRepeatCount:f32::MAX];
+                let _: () = msg_send![opacity_anim, setBeginTime:now + delay];
+
+                let opacity_key = NSString::alloc(nil).init_str("opacityAnim");
+                let _: () = msg_send![layer, addAnimation:opacity_anim forKey:opacity_key];
+            }
+        }
     }
 
     fn stop_animation(&self) {
+        if !self.animation_running.load(Ordering::SeqCst) {
+            return;
+        }
         self.animation_running.store(false, Ordering::SeqCst);
+
+        unsafe {
+            // 移除所有动画并重置状态
+            for dot in &self.dot_views {
+                let layer: id = msg_send![*dot, layer];
+                let _: () = msg_send![layer, removeAllAnimations];
+                // 重置透明度
+                let _: () = msg_send![layer, setOpacity:0.3f32];
+            }
+        }
     }
 }
 

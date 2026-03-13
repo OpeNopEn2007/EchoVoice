@@ -110,6 +110,10 @@ fn main() -> anyhow::Result<()> {
 
     println!("\nComponents ready!");
 
+    // 初始化悬浮胶囊
+    let mut capsule = NativeCapsule::new()?;
+    println!("  ✓ Floating Capsule");
+
     // 解析热键
     let hotkey_key = parse_key(&config.hotkey.primary).unwrap_or(Key::F9);
     println!("\nPress {} to start recording, release to stop...", config.hotkey.primary);
@@ -162,6 +166,14 @@ fn main() -> anyhow::Result<()> {
                 } else {
                     is_recording = true;
                     println!("\n[Recording...]");
+
+                    // 显示胶囊窗口
+                    let (screen_w, screen_h) = echovoice_floating::macos::get_screen_size();
+                    let menu_height = echovoice_floating::macos::get_menu_bar_height();
+                    let (x, y) = calculate_position(screen_w, screen_h, menu_height);
+                    let _ = capsule.show(x, y);
+                    let _ = capsule.set_state(CapsuleState::Recording);
+
                     // 播放开始提示音（高频）
                     if config.ui.sound.enabled && config.ui.sound.recording_start {
                         let _ = player.play_recording_start();
@@ -182,6 +194,9 @@ fn main() -> anyhow::Result<()> {
                     is_recording = false;
                     println!("[Stopped]");
 
+                    // 更新胶囊状态为处理中
+                    let _ = capsule.set_state(CapsuleState::Processing);
+
                     // 播放停止提示音（中频）
                     if config.ui.sound.enabled {
                         let _ = player.play_recording_stop();
@@ -192,9 +207,13 @@ fn main() -> anyhow::Result<()> {
                     recorder.clear_buffer();
 
                     if !audio.is_empty() {
-                        process_recording(audio, &asr, &llm, &mut player, &config.ui.sound);
+                        process_recording(audio, &asr, &llm, &mut player, &config.ui.sound, &mut capsule);
                     } else {
                         println!("No audio recorded");
+                        let _ = capsule.set_state(CapsuleState::NoAudio);
+                        // 2秒后隐藏
+                        thread::sleep(Duration::from_millis(2000));
+                        let _ = capsule.hide();
                     }
                 }
             }
@@ -211,6 +230,7 @@ fn process_recording(
     llm: &Arc<std::sync::Mutex<SmolLM2>>,
     player: &mut AudioPlayer,
     sound_config: &echovoice_config::SoundConfig,
+    capsule: &mut NativeCapsule,
 ) {
     let duration_secs = audio.len() as f32 / 16000.0;
     println!("Recording done ({}s)", duration_secs);
@@ -222,6 +242,7 @@ fn process_recording(
             Ok(t) => t,
             Err(e) => {
                 eprintln!("ASR error: {}", e);
+                let _ = capsule.set_state(CapsuleState::Error("识别失败".to_string()));
                 return;
             }
         },
@@ -230,6 +251,7 @@ fn process_recording(
 
     if text.is_empty() {
         println!("No text recognized");
+        let _ = capsule.set_state(CapsuleState::NoAudio);
         return;
     }
 
@@ -255,12 +277,18 @@ fn process_recording(
     // 复制到剪贴板
     if copy_to_clipboard(&polished) {
         println!("✓ Copied to clipboard");
+        let _ = capsule.set_state(CapsuleState::Success);
     } else {
         eprintln!("Failed to copy to clipboard");
+        let _ = capsule.set_state(CapsuleState::Error("复制失败".to_string()));
     }
 
     // 播放完成提示音（上升双音调）
     if sound_config.enabled && sound_config.processing_done {
         let _ = player.play_processing_done();
     }
+
+    // 2秒后隐藏胶囊
+    thread::sleep(Duration::from_secs(2));
+    let _ = capsule.hide();
 }
