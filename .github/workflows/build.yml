@@ -1,0 +1,60 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Download models
+      run: |
+        mkdir -p models
+        curl -L -o models/ggml-base.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin"
+        curl -L -o models/smollm2-360m-q8.gguf "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q8_0.gguf"
+    - name: Build
+      env:
+        CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+      run: cargo build --release
+    - name: Package DMG
+      run: |
+        bash scripts/build-dmg.sh 0.1.0
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: EchoVoice-macOS
+        path: |
+          target/EchoVoice-*.dmg
+          target/release/echovoice
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    - name: Install LLVM
+      run: choco install llvm
+    - name: Download models
+      run: |
+        mkdir -p models
+        curl -L -o models/ggml-base.bin "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin"
+        curl -L -o models/smollm2-360m-q8.gguf "https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q8_0.gguf"
+    - name: Build
+      env:
+        CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+      run: cargo build --release
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: EchoVoice-Windows
+        path: |
+          target/release/echovoice.exe
+          target/release/*.dll
