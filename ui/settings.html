@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - EchoVoice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #007AFF;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 0;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #007AFF;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056CC;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin-top: 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ EchoVoice 设置</h1>
+            <p>配置您的语音输入偏好</p>
+        </div>
+
+        <!-- 快捷键设置 -->
+        <div class="section">
+            <div class="section-title">⌨️ 快捷键</div>
+            <div class="form-group">
+                <label for="hotkey-primary">主快捷键</label>
+                <input type="text" id="hotkey-primary" placeholder="例如: F9" value="F9">
+                <p class="help-text">按住此键开始录音，松开停止</p>
+            </div>
+            <div class="form-group">
+                <label for="hotkey-secondary">备用快捷键（可选）</label>
+                <input type="text" id="hotkey-secondary" placeholder="例如: CapsLock" value="CapsLock">
+            </div>
+        </div>
+
+        <!-- 提示音设置 -->
+        <div class="section">
+            <div class="section-title">🔊 提示音</div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="sound-enabled" checked>
+                <label for="sound-enabled">启用提示音</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="sound-startup" checked>
+                <label for="sound-startup">启动提示</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="sound-recording" checked>
+                <label for="sound-recording">录音开始/停止提示</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="sound-done" checked>
+                <label for="sound-done">处理完成提示</label>
+            </div>
+        </div>
+
+        <!-- ASR 设置 -->
+        <div class="section">
+            <div class="section-title">🎤 语音识别 (ASR)</div>
+            <div class="form-group">
+                <label for="asr-model">模型</label>
+                <select id="asr-model">
+                    <option value="whisper-base">Whisper Base</option>
+                    <option value="whisper-small">Whisper Small</option>
+                    <option value="whisper-medium">Whisper Medium</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="asr-language">语言</label>
+                <select id="asr-language">
+                    <option value="auto">自动检测</option>
+                    <option value="zh">中文</option>
+                    <option value="en">英文</option>
+                    <option value="ja">日语</option>
+                    <option value="ko">韩语</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- LLM 设置 -->
+        <div class="section">
+            <div class="section-title">🤖 文本润色 (LLM)</div>
+            <div class="form-group">
+                <label for="llm-model">模型</label>
+                <select id="llm-model">
+                    <option value="smollm2-360m">SmolLM2 360M</option>
+                    <option value="smollm2-1.7b">SmolLM2 1.7B</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="system-prompt">系统提示词</label>
+                <input type="text" id="system-prompt" placeholder="文本润色助手的角色描述">
+            </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="actions">
+            <button class="btn-secondary" onclick="resetConfig()">恢复默认</button>
+            <button class="btn-primary" onclick="saveConfig()">保存设置</button>
+        </div>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        const { invoke } = window.__TAURI_CORE__;
+
+        // 加载配置
+        async function loadConfig() {
+            try {
+                const config = await invoke('get_config');
+
+                // 快捷键
+                document.getElementById('hotkey-primary').value = config.hotkey?.primary || 'F9';
+                document.getElementById('hotkey-secondary').value = config.hotkey?.secondary || '';
+
+                // 提示音
+                document.getElementById('sound-enabled').checked = config.ui?.sound?.enabled ?? true;
+                document.getElementById('sound-startup').checked = config.ui?.sound?.startup ?? true;
+                document.getElementById('sound-recording').checked = config.ui?.sound?.recording_start ?? true;
+                document.getElementById('sound-done').checked = config.ui?.sound?.processing_done ?? true;
+
+                // ASR
+                document.getElementById('asr-model').value = config.asr?.model || 'whisper-base';
+                document.getElementById('asr-language').value = config.asr?.language || 'auto';
+
+                // LLM
+                document.getElementById('llm-model').value = config.llm?.model || 'smollm2-360m';
+                document.getElementById('system-prompt').value = config.llm?.system_prompt || '';
+            } catch (error) {
+                showStatus('加载配置失败: ' + error, 'error');
+            }
+        }
+
+        // 保存配置
+        async function saveConfig() {
+            const config = {
+                hotkey: {
+                    primary: document.getElementById('hotkey-primary').value,
+                    secondary: document.getElementById('hotkey-secondary').value || null
+                },
+                asr: {
+                    model: document.getElementById('asr-model').value,
+                    language: document.getElementById('asr-language').value
+                },
+                llm: {
+                    model: document.getElementById('llm-model').value,
+                    system_prompt: document.getElementById('system-prompt').value
+                },
+                ui: {
+                    float_ball_opacity: 0.8,
+                    theme: 'auto',
+                    sound: {
+                        enabled: document.getElementById('sound-enabled').checked,
+                        startup: document.getElementById('sound-startup').checked,
+                        recording_start: document.getElementById('sound-recording').checked,
+                        processing_done: document.getElementById('sound-done').checked
+                    }
+                }
+            };
+
+            try {
+                await invoke('save_config', { config });
+                showStatus('设置已保存', 'success');
+            } catch (error) {
+                showStatus('保存失败: ' + error, 'error');
+            }
+        }
+
+        // 恢复默认
+        async function resetConfig() {
+            if (!confirm('确定要恢复默认设置吗？')) return;
+
+            const defaultConfig = {
+                hotkey: { primary: 'F9', secondary: 'CapsLock' },
+                asr: { model: 'whisper-base', language: 'auto' },
+                llm: { model: 'smollm2-360m', system_prompt: '你是一个文本润色助手，请改进用户的输入，使其更流畅、专业。' },
+                ui: {
+                    float_ball_opacity: 0.8,
+                    theme: 'auto',
+                    sound: { enabled: true, startup: true, recording_start: true, processing_done: true }
+                }
+            };
+
+            try {
+                await invoke('save_config', { config: defaultConfig });
+                loadConfig();
+                showStatus('已恢复默认设置', 'success');
+            } catch (error) {
+                showStatus('恢复失败: ' + error, 'error');
+            }
+        }
+
+        // 显示状态
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            setTimeout(() => {
+                status.className = 'status';
+            }, 3000);
+        }
+
+        // 页面加载时读取配置
+        document.addEventListener('DOMContentLoaded', loadConfig);
+    </script>
+</body>
+</html>

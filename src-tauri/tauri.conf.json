@@ -30,7 +30,7 @@
     "copyright": "",
     "targets": "all",
     "externalBin": [],
-    "resources": ["../models"],
+    "resources": ["../ui/settings.html", "../models"],
     "shortDescription": "AI Voice Input",
     "longDescription": "",
     "icon": [

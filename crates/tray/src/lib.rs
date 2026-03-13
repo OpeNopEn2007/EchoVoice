@@ -1,4 +1,4 @@
-use tray_icon::{TrayIconBuilder, menu::Menu};
+use tray_icon::{TrayIconBuilder, menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem}};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -8,28 +8,52 @@ pub enum TrayError {
 }
 
 pub struct TrayManager {
-    // Tray icon instance
+    _tray: tray_icon::TrayIcon,
+}
+
+pub enum TrayEvent {
+    Settings,
+    Quit,
 }
 
 impl TrayManager {
-    pub fn new() -> Result<Self, TrayError> {
+    pub fn new<F>(on_event: F) -> Result<Self, TrayError>
+    where
+        F: Fn(TrayEvent) + Send + Sync + 'static,
+    {
+        // 创建菜单项
+        let settings_item = MenuItem::new("设置", true, None);
+        let separator = PredefinedMenuItem::separator();
+        let quit_item = MenuItem::new("退出", true, None);
+
+        // 创建菜单
         let menu = Menu::new();
-        
-        let _tray = TrayIconBuilder::new()
+        menu.append(&settings_item).map_err(|e| TrayError::CreateError(e.to_string()))?;
+        menu.append(&separator).map_err(|e| TrayError::CreateError(e.to_string()))?;
+        menu.append(&quit_item).map_err(|e| TrayError::CreateError(e.to_string()))?;
+
+        // 创建托盘图标
+        let tray = TrayIconBuilder::new()
             .with_menu(Box::new(menu))
             .with_tooltip("EchoVoice")
             .build()
             .map_err(|e| TrayError::CreateError(e.to_string()))?;
 
-        Ok(Self {})
-    }
+        // 处理菜单事件
+        std::thread::spawn(move || {
+            let menu_channel = MenuEvent::receiver();
+            loop {
+                if let Ok(event) = menu_channel.recv() {
+                    if event.id == settings_item.id() {
+                        on_event(TrayEvent::Settings);
+                    } else if event.id == quit_item.id() {
+                        on_event(TrayEvent::Quit);
+                    }
+                }
+            }
+        });
 
-    pub fn show(&self) {
-        // Show tray icon
-    }
-
-    pub fn hide(&self) {
-        // Hide tray icon
+        Ok(Self { _tray: tray })
     }
 }
 
@@ -44,6 +68,6 @@ mod tests {
             return;
         }
         // Tray creation may fail in headless environments
-        let _ = TrayManager::new();
+        let _ = TrayManager::new(|_| {});
     }
 }
