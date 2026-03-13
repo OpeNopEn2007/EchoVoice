@@ -5,6 +5,10 @@
 
 use thiserror::Error;
 
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate objc;
+
 #[derive(Error, Debug)]
 pub enum FloatingError {
     #[error("Window creation failed: {0}")]
