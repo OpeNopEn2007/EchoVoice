@@ -53,23 +53,15 @@ jobs:
         RUSTFLAGS: "-C link-arg=/FORCE:MULTIPLE"
       run: cargo build --release
     - name: Create Windows Package
+      shell: pwsh
       run: |
-        # Create package directory with models
-        $pkgDir = "target\windows-package"
-        New-Item -ItemType Directory -Force -Path "$pkgDir\models"
-        # Copy executable
-        Copy-Item "target\release\echovoice.exe" "$pkgDir\"
-        # Copy DLLs
-        Copy-Item "target\release\*.dll" "$pkgDir\" -ErrorAction SilentlyContinue
-        # Copy models
-        Copy-Item "models\ggml-base.bin" "$pkgDir\models\"
-        Copy-Item "models\smollm2-360m-q8.gguf" "$pkgDir\models\"
-        # Create startup script
-        @"
-@echo off
-cd /d "%~dp0"
-echovoice.exe
-"@ | Out-File -Encoding ASCII "$pkgDir\EchoVoice.bat"
+        $pkgDir = "target/windows-package"
+        New-Item -ItemType Directory -Force -Path "$pkgDir/models"
+        Copy-Item "target/release/echovoice.exe" "$pkgDir/"
+        Copy-Item "target/release/*.dll" "$pkgDir/" -ErrorAction SilentlyContinue
+        Copy-Item "models/ggml-base.bin" "$pkgDir/models/"
+        Copy-Item "models/smollm2-360m-q8.gguf" "$pkgDir/models/"
+        "@echo off`ncd /d ""%~dp0""`nechovoice.exe" | Out-File -Encoding ASCII "$pkgDir/EchoVoice.bat"
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
