@@ -1098,6 +1098,7 @@ dependencies = [
 name = "echovoice-tauri"
 version = "0.1.0"
 dependencies = [
+ "arboard",
  "echovoice-asr",
  "echovoice-audio",
  "echovoice-config",

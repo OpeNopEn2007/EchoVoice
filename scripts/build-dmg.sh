@@ -81,6 +81,18 @@ if [ -f "src-tauri/icons/icon.icns" ]; then
     cp "src-tauri/icons/icon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
 fi
 
+# 复制模型文件
+if [ -d "models" ]; then
+    echo "--- 复制模型文件 ---"
+    mkdir -p "$APP_DIR/Contents/Resources/models"
+    cp models/ggml-base.bin "$APP_DIR/Contents/Resources/models/" 2>/dev/null || echo "警告: 未找到 ggml-base.bin"
+    cp models/smollm2-360m-q8.gguf "$APP_DIR/Contents/Resources/models/" 2>/dev/null || echo "警告: 未找到 smollm2-360m-q8.gguf"
+    du -sh "$APP_DIR/Contents/Resources/models" 2>/dev/null || true
+    echo "✓ 模型文件复制完成"
+else
+    echo "警告: 未找到 models 目录"
+fi
+
 echo "✓ 应用包创建完成"
 echo ""
 
@@ -101,10 +113,10 @@ if command -v create-dmg &> /dev/null; then
         "$DMG_PATH" \
         "$APP_DIR"
 else
-    # 简单 DMG 创建
+    # 简单 DMG 创建（包含模型需要 600MB 空间）
     TEMP_DMG="target/temp.dmg"
     hdiutil create -srcfolder "$APP_DIR" -volname "$APP_NAME" -fs HFS+ \
-        -format UDRW -size 100m "$TEMP_DMG"
+        -format UDRW -size 600m "$TEMP_DMG"
     hdiutil convert "$TEMP_DMG" -format UDZO -o "$DMG_PATH"
     rm "$TEMP_DMG"
 fi

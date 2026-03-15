@@ -25,7 +25,33 @@ enum AppState {
     Processing,
 }
 
-/// 复制文本到剪贴板（跨平台）- 兼容旧代码
+/// 获取应用资源目录（macOS 应用包内）
+fn get_resources_dir() -> Option<std::path::PathBuf> {
+    #[cfg(target_os = "macos")]
+    {
+        // 在 macOS 上，尝试获取应用包内的 Resources 目录
+        let exe_path = std::env::current_exe().ok()?;
+        let bundle_path = exe_path.parent()?.parent()?.parent()?;
+        let resources_dir = bundle_path.join("Contents/Resources");
+        if resources_dir.exists() {
+            return Some(resources_dir);
+        }
+    }
+    None
+}
+
+/// 获取模型目录路径
+fn get_models_dir() -> std::path::PathBuf {
+    // 首先检查应用资源目录（打包后的应用）
+    if let Some(resources) = get_resources_dir() {
+        let bundled_models = resources.join("models");
+        if bundled_models.exists() {
+            return bundled_models;
+        }
+    }
+    // 回退到本地 models 目录（开发时）
+    std::path::PathBuf::from("models")
+}
 fn copy_to_clipboard(text: &str) -> bool {
     match OutputManager::new() {
         Ok(mut output) => output.output_clipboard(text).is_ok(),
@@ -46,15 +72,16 @@ fn main() -> anyhow::Result<()> {
     println!("  - Hotkey: {}", config.hotkey.primary);
 
     // 检查模型目录
-    let models_dir = Path::new("models");
+    let models_dir = get_models_dir();
     if !models_dir.exists() {
-        eprintln!("Error: models/ directory not found");
+        eprintln!("Error: models/ directory not found at {:?}", models_dir);
         std::process::exit(1);
     }
+    println!("Models directory: {:?}", models_dir);
 
     // 显示可用模型
     println!("\nAvailable models:");
-    if let Ok(entries) = std::fs::read_dir(models_dir) {
+    if let Ok(entries) = std::fs::read_dir(&models_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_file() {
@@ -69,8 +96,8 @@ fn main() -> anyhow::Result<()> {
     }
 
     // 确定模型路径（从配置读取，或使用默认值）
-    let asr_model_path = format!("models/{}.bin", config.asr.model);
-    let llm_model_path = format!("models/{}.gguf", config.llm.model);
+    let asr_model_path = models_dir.join(format!("{}.bin", config.asr.model)).to_string_lossy().to_string();
+    let llm_model_path = models_dir.join(format!("{}.gguf", config.llm.model)).to_string_lossy().to_string();
 
     // 检查模型文件是否存在
     if !Path::new(&asr_model_path).exists() {
