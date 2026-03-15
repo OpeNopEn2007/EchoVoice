@@ -77,11 +77,10 @@ fn copy_to_clipboard(text: String) {
 
     #[cfg(target_os = "windows")]
     {
-        use std::process::Command;
-        let mut child = Command::new("powershell.exe")
-            .args(["-Command", "Set-Clipboard", "-Value", &text])
-            .spawn();
-        let _ = child;
+        use arboard::Clipboard;
+        if let Ok(mut clipboard) = Clipboard::new() {
+            let _ = clipboard.set_text(text);
+        }
     }
 }
 
